@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Bitcoin-Tracker/client"
 	"errors"
 	"fmt"
 	"github.com/d2r2/go-hd44780"
@@ -9,18 +10,18 @@ import (
 
 func main() {
 	//create client and make request
-	c := NewClient(2)
-	go c.get()
+	c := client.NewClient(30)
+	go c.Get()
 
 	lcd, err := getLCD()
 	if err != nil {
-		c.errChan <- err
+		c.ErrChan <- err
 	}
 	for {
 		select {
-		case resp := <-c.respChan: //Handle response here
+		case resp := <-c.RespChan: //Handle response here
 			write(lcd, resp.Bpi.USD.Rate)
-		case err := <-c.errChan: //Handle error here
+		case err := <-c.ErrChan: //Handle error here
 			write(lcd, err.Error())
 		}
 	}
@@ -29,10 +30,10 @@ func main() {
 func write(lcd *hd44780.Lcd, message string) {
 	lcd.Home()
 	lcd.SetPosition(0, 0)
-	fmt.Println(message)
+	fmt.Fprint(lcd, message)
 }
 func getLCD() (*hd44780.Lcd, error) {
-	i2c, err := i2c2.NewI2C(0x27, 2)
+	i2c, err := i2c2.NewI2C(0x27, 1)
 	if err != nil {
 		return nil, errors.New("Unable to locate i2c")
 	}

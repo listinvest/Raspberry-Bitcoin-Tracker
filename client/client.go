@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"encoding/json"
@@ -12,9 +12,9 @@ type Client struct {
 	//Default httpClient
 	httpClient     *http.Client
 	coindeskConfig config
-	respChan       chan *Response
+	RespChan       chan *Response
 	//Channel for error handling
-	errChan chan error
+	ErrChan chan error
 	//limits the request
 	requestsPerSecond time.Duration
 }
@@ -30,17 +30,17 @@ func NewClient(timer int) *Client {
 			host: "https://api.coindesk.com/",
 			path: "v1/bpi/currentprice.json",
 		},
-		respChan:          make(chan *Response),
-		errChan:           make(chan error),
+		RespChan:          make(chan *Response),
+		ErrChan:           make(chan error),
 		requestsPerSecond: time.Second * time.Duration(timer), //Makes a request every given second
 	}
 }
 
 // Make a http GET Request to the Server
-func (c *Client) get() {
+func (c *Client) Get() {
 	req, err := http.NewRequest(http.MethodGet, c.coindeskConfig.host+c.coindeskConfig.path, nil)
 	if err != nil {
-		c.errChan <- errors.New("NewReqeust failed: " + c.coindeskConfig.host + c.coindeskConfig.path)
+		c.ErrChan <- errors.New("NewReqeust failed: " + c.coindeskConfig.host + c.coindeskConfig.path)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (c *Client) do(req *http.Request) {
 
 	httpResp, err := client.Do(req)
 	if err != nil {
-		c.errChan <- fmt.Errorf("client failed to do request %v", err)
+		c.ErrChan <- fmt.Errorf("client failed to do request %v", err)
 		return
 	}
 	defer httpResp.Body.Close()
@@ -69,7 +69,7 @@ func (c *Client) do(req *http.Request) {
 
 	var s Response
 	err = decoder.Decode(&s)
-	c.respChan <- &s
+	c.RespChan <- &s
 }
 
 //Reponse from Coindesk
