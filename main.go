@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -50,7 +51,9 @@ loop:
 			lcd.SetPosition(1, 0)
 			fmt.Fprint(lcd, err)
 		case <-sigs:
-			fmt.Println("Got shutdown, exiting")
+			fmt.Fprintf(lcd, "Got shutdown, exiting")
+			time.Sleep(time.Second * 2)
+			lcd.BacklightOff()
 			// Break out of the outer for statement and end the program
 			break loop
 		}
